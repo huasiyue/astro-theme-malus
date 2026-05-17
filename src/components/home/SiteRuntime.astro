@@ -1,0 +1,61 @@
+---
+import type { Lang } from "@/config/site";
+import { siteConfig } from "@/config/site";
+
+interface Props {
+  lang?: Lang;
+}
+
+const { lang = "zh" } = Astro.props;
+const defaultLaunchedAt = "2026-05-15T00:00:00+08:00";
+const launchedAt = siteConfig.launchedAt?.trim() || defaultLaunchedAt;
+const launchDate = launchedAt.slice(0, 10);
+const fallback = lang === "en" ? `Since ${launchDate}` : `自 ${launchDate} 起`;
+---
+
+<strong
+  class="site-runtime"
+  data-site-runtime
+  data-start-at={launchedAt}
+  data-lang={lang}
+  aria-live="off"
+>
+  {fallback}
+</strong>
+
+<script is:inline data-astro-rerun>
+  (() => {
+    const nodes = Array.from(document.querySelectorAll("[data-site-runtime]"));
+    if (!nodes.length) return;
+
+    const format = (startAt, lang) => {
+      const start = new Date(startAt).getTime();
+      if (!Number.isFinite(start)) return lang === "en" ? "Running" : "运行中";
+
+      const diff = Math.max(0, Date.now() - start);
+      const totalSeconds = Math.floor(diff / 1000);
+      const days = Math.floor(totalSeconds / 86400);
+      const hours = Math.floor((totalSeconds % 86400) / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+
+      if (lang === "en") {
+        return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+      }
+
+      return `${days}天${hours}小时${minutes}分${seconds}秒`;
+    };
+
+    const render = () => {
+      nodes.forEach((node) => {
+        if (!(node instanceof HTMLElement)) return;
+        node.textContent = format(node.dataset.startAt, node.dataset.lang);
+      });
+    };
+
+    render();
+
+    const timer = window.setInterval(render, 1000);
+    document.addEventListener("astro:before-swap", () => window.clearInterval(timer), { once: true });
+  })();
+</script>

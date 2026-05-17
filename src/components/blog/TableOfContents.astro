@@ -1,0 +1,34 @@
+---
+import { getUi } from "@/i18n/ui";
+import type { Lang } from "@/config/site";
+
+interface Heading {
+  depth: number;
+  slug: string;
+  text: string;
+}
+
+interface Props {
+  headings: Heading[];
+  lang?: Lang;
+}
+
+const { headings, lang = "zh" } = Astro.props;
+const t = getUi(lang);
+const visibleHeadings = headings.filter((heading) => heading.depth >= 2 && heading.depth <= 3);
+---
+
+{visibleHeadings.length > 0 && (
+  <aside class="toc-panel">
+    <div class="toc-title">
+      {t.tableOfContents}
+    </div>
+    <ol class="toc-list">
+      {visibleHeadings.map((heading) => (
+        <li class={`toc-item toc-depth-${heading.depth}`}>
+          <a href={`#${heading.slug}`}>{heading.text}</a>
+        </li>
+      ))}
+    </ol>
+  </aside>
+)}

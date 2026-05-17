@@ -1,0 +1,139 @@
+---
+import { Image } from "astro:assets";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Icon from "@/components/ui/Icon.astro";
+import TableOfContents from "@/components/blog/TableOfContents.astro";
+import CodeCopyEnhancer from "@/components/blog/CodeCopyEnhancer.astro";
+import PostViews from "@/components/blog/PostViews.astro";
+import GiscusComments from "@/components/blog/GiscusComments.astro";
+import ImageLightbox from "@/components/blog/ImageLightbox.astro";
+import type { BlogEntry } from "@/utils/posts";
+import { formatDate, getReadingTime, stripMarkdown } from "@/utils/dates";
+import { getUi } from "@/i18n/ui";
+import type { Lang } from "@/config/site";
+import { siteConfig } from "@/config/site";
+import { getEntrySlug, getPostUrl } from "@/utils/posts";
+import PostCard from "@/components/blog/PostCard.astro";
+
+interface Props {
+  post: BlogEntry;
+  headings: { depth: number; slug: string; text: string }[];
+  relatedPosts?: BlogEntry[];
+  previousPost?: BlogEntry;
+  nextPost?: BlogEntry;
+  lang?: Lang;
+}
+
+const { post, headings, relatedPosts = [], lang = post.data.lang } = Astro.props;
+const t = getUi(lang);
+const readingTime = getReadingTime(stripMarkdown(post.body ?? ""));
+const canonical = new URL(getPostUrl(post), siteConfig.siteUrl).toString();
+const seoImage = post.data.cover ? new URL(post.data.cover.src, siteConfig.siteUrl).toString() : undefined;
+const updatedDate = post.data.updatedDate;
+const showUpdatedDate = siteConfig.blog.showUpdatedDate && Boolean(updatedDate);
+const showReadingTime = siteConfig.blog.showReadingTime;
+const showViews = siteConfig.features.views;
+const showToc = siteConfig.blog.showToc;
+const showPreviousNext = siteConfig.blog.showPreviousNext;
+const showRelatedPosts = siteConfig.blog.showRelatedPosts && relatedPosts.length > 0;
+const showComments = siteConfig.features.comments;
+---
+
+<BaseLayout
+  title={post.data.title}
+  description={post.data.description}
+  lang={lang}
+  canonical={canonical}
+  image={seoImage}
+  pageClass="post-page"
+>
+  <article class="post-page-shell">
+    <header class="post-hero">
+      <div class="post-hero-meta">
+        <span class="meta-chip">
+          <Icon name="calendar" />
+          {formatDate(post.data.pubDate, lang === "en" ? "en-US" : "zh-CN")}
+        </span>
+        {showUpdatedDate && (
+          <span class="meta-chip">
+            <Icon name="settings" />
+            更新于 {updatedDate && formatDate(updatedDate, lang === "en" ? "en-US" : "zh-CN")}
+          </span>
+        )}
+        {showReadingTime && (
+          <span class="meta-chip">
+            <Icon name="clock" />
+            {readingTime} min read
+          </span>
+        )}
+        {showViews && <PostViews slug={getEntrySlug(post)} lang={lang} />}
+        {post.data.category && <span class="meta-chip">{post.data.category}</span>}
+      </div>
+      <h1>{post.data.title}</h1>
+      <p class="post-summary">{post.data.description}</p>
+      <div class="post-tags">
+        {post.data.tags.map((tag) => <a class="tag-pill" href={`/zh/tags/${encodeURIComponent(tag)}/`}>{tag}</a>)}
+      </div>
+      {post.data.cover && (
+        <figure class="post-cover">
+          <Image
+            src={post.data.cover}
+            alt={post.data.coverAlt ?? post.data.title}
+            loading="eager"
+            decoding="async"
+            class="post-cover-image"
+          />
+        </figure>
+      )}
+    </header>
+
+    <div class="post-body-layout">
+      <section class="reading-surface prose">
+        <slot />
+      </section>
+      {showToc && <TableOfContents headings={headings} lang={lang} />}
+    </div>
+
+    <footer class="post-footer">
+      {showPreviousNext && (
+      <div class="post-pager">
+        <div class="post-pager-block">
+          <span class="section-kicker">{t.previousPost}</span>
+          {Astro.props.previousPost ? (
+            <a class="pager-link" href={getPostUrl(Astro.props.previousPost)}>
+              {Astro.props.previousPost.data.title}
+              <Icon name="arrow-right" />
+            </a>
+          ) : (
+            <span class="pager-empty">-</span>
+          )}
+        </div>
+        <div class="post-pager-block">
+          <span class="section-kicker">{t.nextPost}</span>
+          {Astro.props.nextPost ? (
+            <a class="pager-link" href={getPostUrl(Astro.props.nextPost)}>
+              {Astro.props.nextPost.data.title}
+              <Icon name="arrow-right" />
+            </a>
+          ) : (
+            <span class="pager-empty">-</span>
+          )}
+        </div>
+      </div>
+      )}
+
+      {showRelatedPosts && (
+        <section class="related-section">
+          <h2>{t.relatedPosts}</h2>
+          <div class="card-grid">
+            {relatedPosts.map((entry) => <PostCard post={entry} compact />)}
+          </div>
+        </section>
+      )}
+
+      {showComments && <GiscusComments lang={lang} />}
+    </footer>
+  </article>
+  {siteConfig.features.codeCopy && <CodeCopyEnhancer lang={lang} />}
+  {siteConfig.features.imageLightbox && <ImageLightbox lang={lang} />}
+</BaseLayout>

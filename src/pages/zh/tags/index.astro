@@ -1,0 +1,33 @@
+---
+import Icon from "@/components/ui/Icon.astro";
+import { siteConfig } from "@/config/site";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { getAllTags } from "@/utils/posts";
+
+const tags = await getAllTags("zh");
+const page = siteConfig.pages.tags;
+---
+
+<BaseLayout title={page.title} description={page.description} lang="zh">
+  <section class="page-hero">
+    <div class="site-shell page-hero-inner">
+      <span class="section-kicker">{page.kicker}</span>
+      <h1>{page.heading}</h1>
+      <p>{page.body}</p>
+    </div>
+  </section>
+
+  <section class="section-band">
+    <div class="site-shell">
+      <div class="tag-cloud">
+        {tags.length > 0 ? tags.map(({ tag, count }) => (
+          <a class="tag-pill" href={`/zh/tags/${encodeURIComponent(tag)}/`}>
+            <Icon name="tag" />
+            {tag}
+            <span>{count}</span>
+          </a>
+        )) : <p class="section-copy">{page.emptyText}</p>}
+      </div>
+    </div>
+  </section>
+</BaseLayout>

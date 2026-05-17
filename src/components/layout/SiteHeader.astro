@@ -1,0 +1,86 @@
+---
+import { navItems, siteConfig } from "@/config/site";
+import { getUi } from "@/i18n/ui";
+import Icon from "@/components/ui/Icon.astro";
+import SearchDialog from "@/components/layout/SearchDialog.astro";
+import type { Lang } from "@/config/site";
+
+interface Props {
+  lang?: Lang;
+  showNav?: boolean;
+}
+
+const { lang = siteConfig.defaultLang, showNav = true } = Astro.props;
+const t = getUi(lang);
+const languageSwitchHref = lang === "zh" ? "/en/" : "/";
+const brandHref = lang === "en" ? "/en/" : "/";
+const showSearch = siteConfig.features.search && siteConfig.plugins.pagefind;
+---
+
+<div data-search-root>
+  <header class="site-header">
+    <div class="site-shell site-header-inner">
+      <a class="brand" href={brandHref} aria-label={siteConfig.siteName}>
+        <span class="brand-mark">{siteConfig.brandMark}</span>
+        <span class="brand-copy">
+          <strong>{siteConfig.siteName}</strong>
+          <small>{siteConfig.siteDescription}</small>
+        </span>
+      </a>
+
+      {showNav && (
+        <nav class="site-nav" aria-label="Primary">
+          {navItems.map((item) => (
+            <a class="nav-link" href={item.href}>
+              {item.label[lang]}
+            </a>
+          ))}
+        </nav>
+      )}
+
+      <div class="header-actions">
+        {showSearch && (
+          <button
+            class="icon-action icon-action-compact"
+            type="button"
+            aria-label={t.search}
+            aria-haspopup="dialog"
+            aria-expanded="false"
+            aria-controls="site-search-dialog"
+            data-search-open
+          >
+            <Icon name="search" />
+          </button>
+        )}
+        {siteConfig.githubUrl && (
+          <a class="icon-action icon-action-compact" href={siteConfig.githubUrl} target="_blank" rel="noreferrer" aria-label="GitHub">
+            <Icon name="github" />
+          </a>
+        )}
+        {siteConfig.features.languageSwitch && (
+          <a class="icon-action" href={languageSwitchHref} aria-label={t.language}>
+            <Icon name="globe" />
+            <span class="action-text">{lang === "zh" ? "EN" : "中文"}</span>
+          </a>
+        )}
+        {siteConfig.features.themeSwitch && (
+          <div class="theme-toggle" data-theme-switcher aria-label={t.theme}>
+            <button class="theme-toggle-button" type="button" data-theme-option="light" aria-label={t.light}>
+              <Icon name="sun" />
+              <span class="sr-only">{t.light}</span>
+            </button>
+            <button class="theme-toggle-button" type="button" data-theme-option="system" aria-label={t.system}>
+              <Icon name="system" />
+              <span class="sr-only">{t.system}</span>
+            </button>
+            <button class="theme-toggle-button" type="button" data-theme-option="dark" aria-label={t.dark}>
+              <Icon name="moon" />
+              <span class="sr-only">{t.dark}</span>
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  </header>
+  {showSearch && <SearchDialog lang={lang} />}
+</div>

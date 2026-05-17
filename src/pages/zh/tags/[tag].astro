@@ -1,0 +1,46 @@
+---
+import PostCard from "@/components/blog/PostCard.astro";
+import { siteConfig } from "@/config/site";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { getAllTags, getPostsByTag } from "@/utils/posts";
+
+export async function getStaticPaths() {
+  const tags = await getAllTags("zh");
+
+  return Promise.all(
+    tags.map(async ({ tag }) => ({
+      params: { tag },
+      props: {
+        tag,
+        posts: await getPostsByTag(tag, "zh")
+      }
+    }))
+  );
+}
+
+const { tag, posts } = Astro.props;
+const page = siteConfig.pages.tagDetail;
+const formatTemplate = (template: string, values: Record<string, string | number>) =>
+  Object.entries(values).reduce((result, [key, value]) => result.replaceAll(`{${key}}`, String(value)), template);
+const title = formatTemplate(page.titleTemplate, { tag });
+const description = formatTemplate(page.descriptionTemplate, { tag });
+const countText = formatTemplate(page.countTemplate, { count: posts.length });
+---
+
+<BaseLayout title={title} description={description} lang="zh">
+  <section class="page-hero">
+    <div class="site-shell page-hero-inner">
+      <span class="section-kicker">{page.kicker}</span>
+      <h1>{tag}</h1>
+      <p>{countText}</p>
+    </div>
+  </section>
+
+  <section class="section-band">
+    <div class="site-shell">
+      <div class="card-grid">
+        {posts.length > 0 ? posts.map((post) => <PostCard post={post} />) : <p class="section-copy">{page.emptyText}</p>}
+      </div>
+    </div>
+  </section>
+</BaseLayout>

@@ -1,0 +1,156 @@
+---
+import Icon from "@/components/ui/Icon.astro";
+import type { Lang } from "@/config/site";
+import { getUi } from "@/i18n/ui";
+
+interface Props {
+  lang?: Lang;
+}
+
+const { lang = "zh" } = Astro.props;
+const t = getUi(lang);
+---
+
+<div
+  class="image-lightbox"
+  hidden
+  aria-hidden="true"
+  data-image-lightbox-root
+  data-open-label={t.openImage}
+  data-close-label={t.closeImage}
+>
+  <button class="image-lightbox-backdrop" type="button" data-lightbox-close aria-label={t.closeImage}></button>
+  <div class="image-lightbox-dialog" role="dialog" aria-modal="true" aria-label={t.openImage}>
+    <button class="image-lightbox-close" type="button" data-lightbox-close aria-label={t.closeImage}>
+      <Icon name="close" />
+    </button>
+    <figure class="image-lightbox-figure">
+      <img class="image-lightbox-image" data-lightbox-image alt="" />
+      <figcaption class="image-lightbox-caption" data-lightbox-caption hidden></figcaption>
+    </figure>
+  </div>
+</div>
+
+<script is:inline data-astro-rerun>
+  (() => {
+    const state = window.__yunImageLightboxController ?? {
+      root: null,
+      boundRoot: null,
+      activeTrigger: null,
+      initialized: false
+    };
+
+    const getRoot = () => document.querySelector("[data-image-lightbox-root]");
+
+    const getImage = () => state.root?.querySelector("[data-lightbox-image]");
+    const getCaption = () => state.root?.querySelector("[data-lightbox-caption]");
+    const getCloseButton = () => state.root?.querySelector(".image-lightbox-close");
+
+    const close = () => {
+      if (!state.root || state.root.hidden) return;
+
+      state.root.hidden = true;
+      state.root.setAttribute("aria-hidden", "true");
+      document.body.classList.remove("is-lightbox-open");
+
+      const image = getImage();
+      if (image instanceof HTMLImageElement) {
+        image.removeAttribute("src");
+        image.removeAttribute("srcset");
+        image.removeAttribute("sizes");
+        image.alt = "";
+      }
+
+      const caption = getCaption();
+      if (caption instanceof HTMLElement) {
+        caption.hidden = true;
+        caption.textContent = "";
+      }
+
+      const trigger = state.activeTrigger;
+      state.activeTrigger = null;
+      window.setTimeout(() => {
+        if (trigger instanceof HTMLElement && trigger.isConnected) {
+          trigger.focus({ preventScroll: true });
+        }
+      }, 0);
+    };
+
+    const open = (trigger) => {
+      if (!(trigger instanceof HTMLImageElement) || !state.root) return;
+
+      const image = getImage();
+      const caption = getCaption();
+      const closeButton = getCloseButton();
+
+      if (!(image instanceof HTMLImageElement) || !(caption instanceof HTMLElement)) return;
+
+      state.activeTrigger = trigger;
+      image.src = trigger.currentSrc || trigger.src;
+      if (trigger.srcset) image.srcset = trigger.srcset;
+      if (trigger.sizes) image.sizes = trigger.sizes;
+      image.alt = trigger.alt;
+      caption.textContent = trigger.alt.trim();
+      caption.hidden = !trigger.alt.trim();
+
+      state.root.hidden = false;
+      state.root.removeAttribute("aria-hidden");
+      document.body.classList.add("is-lightbox-open");
+
+      window.requestAnimationFrame(() => {
+        closeButton instanceof HTMLElement && closeButton.focus({ preventScroll: true });
+      });
+    };
+
+    const bindRoot = (root) => {
+      if (!(root instanceof HTMLElement) || state.boundRoot === root) return;
+
+      state.boundRoot = root;
+      root.querySelectorAll("[data-lightbox-close]").forEach((button) => {
+        if (!(button instanceof HTMLButtonElement) || button.dataset.closeBound === "true") return;
+        button.dataset.closeBound = "true";
+        button.addEventListener("click", close);
+      });
+    };
+
+    const bindImages = () => {
+      const openLabel = state.root?.dataset.openLabel || "Open image";
+      document.querySelectorAll(".reading-surface img").forEach((img) => {
+        if (!(img instanceof HTMLImageElement) || img.dataset.lightboxReady === "true") return;
+        if (img.closest("a")) return;
+
+        img.dataset.lightboxReady = "true";
+        img.dataset.lightboxTrigger = "true";
+        img.tabIndex = 0;
+        img.setAttribute("role", "button");
+        img.setAttribute("aria-label", img.alt ? `${openLabel}: ${img.alt}` : openLabel);
+        img.addEventListener("click", () => open(img));
+        img.addEventListener("keydown", (event) => {
+          if (event.key !== "Enter" && event.key !== " ") return;
+          event.preventDefault();
+          open(img);
+        });
+      });
+    };
+
+    const init = () => {
+      state.root = getRoot();
+      if (!state.root) return;
+
+      bindRoot(state.root);
+      bindImages();
+    };
+
+    if (!window.__yunImageLightboxController) {
+      window.__yunImageLightboxController = { init, close };
+      document.addEventListener("astro:page-load", init);
+      document.addEventListener("astro:before-swap", close);
+      document.addEventListener("keydown", (event) => {
+        if (event.key !== "Escape") return;
+        close();
+      });
+    }
+
+    window.__yunImageLightboxController.init();
+  })();
+</script>

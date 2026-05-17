@@ -1,0 +1,219 @@
+---
+import Icon from "@/components/ui/Icon.astro";
+import { getUi } from "@/i18n/ui";
+import type { Lang } from "@/config/site";
+
+interface Props {
+  lang?: Lang;
+}
+
+const { lang = "zh" } = Astro.props;
+const t = getUi(lang);
+---
+
+<div
+  class="search-overlay"
+  data-search-overlay
+  data-search-empty={t.searchEmpty}
+  data-search-loading={t.searchLoading}
+  data-search-error={t.searchError}
+  data-search-no-results={t.searchNoResults}
+  data-search-result-count={t.searchResultCount}
+  data-search-no-excerpt={t.searchNoExcerpt}
+  hidden
+>
+  <button class="search-backdrop" type="button" aria-label={t.searchClose} data-search-close></button>
+  <section
+    id="site-search-dialog"
+    class="search-dialog"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="site-search-title"
+    tabindex="-1"
+    data-search-dialog
+  >
+    <div class="search-dialog-head">
+      <div>
+        <span class="section-kicker">Search</span>
+        <h2 id="site-search-title">{t.search}</h2>
+      </div>
+      <button class="search-close" type="button" aria-label={t.searchClose} data-search-close>Esc</button>
+    </div>
+
+    <label class="sr-only" for="site-search-input">{t.search}</label>
+    <div class="search-input-row search-input-row-dialog">
+      <Icon name="search" />
+      <input
+        id="site-search-input"
+        class="search-input"
+        type="search"
+        placeholder={t.searchPlaceholder}
+        autocomplete="off"
+        spellcheck="false"
+        data-search-input
+      />
+      <button class="search-clear" type="button" data-search-clear hidden>{t.searchClear}</button>
+    </div>
+
+    <p class="search-status" data-search-status>{t.searchEmpty}</p>
+    <div class="search-results search-results-dialog" data-search-results aria-live="polite"></div>
+  </section>
+</div>
+
+<script is:inline data-astro-rerun>
+  (() => {
+    const escapeHtml = (value) =>
+      String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
+    const formatExcerpt = (value) =>
+      escapeHtml(value)
+        .replace(/&lt;mark&gt;/g, "<mark>")
+        .replace(/&lt;\/mark&gt;/g, "</mark>");
+
+    const debounce = (callback, wait = 160) => {
+      let timer;
+      return (...args) => {
+        window.clearTimeout(timer);
+        timer = window.setTimeout(() => callback(...args), wait);
+      };
+    };
+
+    const loadPagefind = async () => {
+      if (window.__malusPagefind) return window.__malusPagefind;
+      window.__malusPagefind = import("/pagefind/pagefind.js");
+      return window.__malusPagefind;
+    };
+
+    const renderResults = (items, container) => {
+      if (!items.length) {
+        container.innerHTML = "";
+        return;
+      }
+
+      container.innerHTML = items
+        .map((item) => {
+          const title = escapeHtml(item.meta?.title || item.title || item.url);
+          const url = escapeHtml(item.url);
+          const excerpt = formatExcerpt(item.excerpt || container.closest("[data-search-overlay]")?.dataset.searchNoExcerpt || "");
+
+          return `
+            <article class="search-result">
+              <a href="${url}" data-search-result-link>
+                <span>${url}</span>
+                <h2>${title}</h2>
+                <p>${excerpt}</p>
+              </a>
+            </article>
+          `;
+        })
+        .join("");
+    };
+
+    const initSearchDialogs = () => {
+      document.querySelectorAll("[data-search-root]").forEach((root) => {
+        if (root.dataset.searchBound === "true") return;
+        root.dataset.searchBound = "true";
+
+        const openButton = root.querySelector("[data-search-open]");
+        const overlay = root.querySelector("[data-search-overlay]");
+        const dialog = root.querySelector("[data-search-dialog]");
+        const input = root.querySelector("[data-search-input]");
+        const clear = root.querySelector("[data-search-clear]");
+        const status = root.querySelector("[data-search-status]");
+        const results = root.querySelector("[data-search-results]");
+        const closeButtons = root.querySelectorAll("[data-search-close]");
+
+        if (!openButton || !overlay || !dialog || !input || !clear || !status || !results) return;
+
+        let lastFocused = null;
+        const controller = new AbortController();
+        const { signal } = controller;
+
+        const close = () => {
+          overlay.hidden = true;
+          document.documentElement.classList.remove("is-search-open");
+          openButton.setAttribute("aria-expanded", "false");
+          lastFocused?.focus?.();
+        };
+
+        const open = () => {
+          lastFocused = document.activeElement;
+          overlay.hidden = false;
+          document.documentElement.classList.add("is-search-open");
+          openButton.setAttribute("aria-expanded", "true");
+          window.setTimeout(() => input.focus(), 30);
+        };
+
+        const runSearch = async () => {
+          const query = input.value.trim();
+          const messages = overlay.dataset;
+          clear.hidden = query.length === 0;
+
+          if (query.length < 2) {
+            status.textContent = messages.searchEmpty;
+            results.innerHTML = "";
+            return;
+          }
+
+          status.textContent = messages.searchLoading;
+
+          try {
+            const pagefind = await loadPagefind();
+            const search = await pagefind.search(query);
+            const data = await Promise.all(search.results.slice(0, 10).map((item) => item.data()));
+
+            renderResults(data, results);
+            status.textContent = data.length
+              ? messages.searchResultCount.replace("{count}", String(data.length))
+              : messages.searchNoResults;
+          } catch (error) {
+            status.textContent = messages.searchError;
+            results.innerHTML = "";
+          }
+        };
+
+        const debouncedSearch = debounce(runSearch);
+
+        openButton.addEventListener("click", open, { signal });
+        closeButtons.forEach((button) => button.addEventListener("click", close, { signal }));
+        input.addEventListener("input", debouncedSearch, { signal });
+        clear.addEventListener("click", () => {
+          input.value = "";
+          clear.hidden = true;
+          status.textContent = overlay.dataset.searchEmpty;
+          results.innerHTML = "";
+          input.focus();
+        }, { signal });
+        results.addEventListener("click", (event) => {
+          if (event.target.closest("[data-search-result-link]")) close();
+        }, { signal });
+
+        document.addEventListener("keydown", (event) => {
+          if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+            event.preventDefault();
+            if (overlay.hidden) open();
+            else input.focus();
+            return;
+          }
+
+          if (overlay.hidden) return;
+
+          if (event.key === "Escape") {
+            close();
+            return;
+          }
+        }, { signal });
+
+        document.addEventListener("astro:before-swap", () => controller.abort(), { once: true, signal });
+      });
+    };
+
+    document.addEventListener("astro:page-load", initSearchDialogs);
+    initSearchDialogs();
+  })();
+</script>

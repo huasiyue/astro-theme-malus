@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" role="img" aria-label="Liquid Glass and reading layer diagram">
+  <rect width="960" height="420" rx="24" fill="#f6f8f5"/>
+  <path d="M74 120h812" stroke="#0f8b6e" stroke-opacity=".18" stroke-width="96" stroke-linecap="round"/>
+  <rect x="92" y="70" width="254" height="280" rx="18" fill="#ffffff" fill-opacity=".58" stroke="#ffffff"/>
+  <rect x="132" y="112" width="128" height="20" rx="10" fill="#0f8b6e" fill-opacity=".34"/>
+  <rect x="132" y="168" width="174" height="14" rx="7" fill="#425049" fill-opacity=".32"/>
+  <rect x="132" y="206" width="132" height="14" rx="7" fill="#425049" fill-opacity=".24"/>
+  <rect x="392" y="50" width="476" height="320" rx="12" fill="#ffffff" stroke="#d8e0da"/>
+  <rect x="442" y="100" width="260" height="22" rx="11" fill="#17201c"/>
+  <rect x="442" y="164" width="338" height="12" rx="6" fill="#5f6b64" fill-opacity=".42"/>
+  <rect x="442" y="202" width="376" height="12" rx="6" fill="#5f6b64" fill-opacity=".36"/>
+  <rect x="442" y="240" width="316" height="12" rx="6" fill="#5f6b64" fill-opacity=".36"/>
+  <rect x="442" y="290" width="188" height="42" rx="8" fill="#0d1117"/>
+  <path d="M372 180h40" stroke="#d75f46" stroke-width="8" stroke-linecap="round"/>
+</svg>

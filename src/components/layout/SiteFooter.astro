@@ -1,0 +1,48 @@
+---
+import Icon from "@/components/ui/Icon.astro";
+import { siteConfig } from "@/config/site";
+import { getUi } from "@/i18n/ui";
+import type { Lang } from "@/config/site";
+
+interface Props {
+  lang?: Lang;
+}
+
+const { lang = siteConfig.defaultLang } = Astro.props;
+const t = getUi(lang);
+---
+
+<footer class="site-footer">
+  <div class="site-shell footer-inner">
+    <div class="footer-meta">
+      <strong>{siteConfig.siteName}</strong>
+      <p>{siteConfig.siteDescription}</p>
+    </div>
+    <div class="footer-links">
+      {siteConfig.features.friends && (
+        <a href="/friends/" class="footer-link">
+          <Icon name="users" />
+          <span>{t.friends}</span>
+        </a>
+      )}
+      {siteConfig.features.sponsor && (
+        <a href="/sponsor/" class="footer-link">
+          <Icon name="heart" />
+          <span>{t.sponsor}</span>
+        </a>
+      )}
+      {siteConfig.features.rss && siteConfig.plugins.rss && (
+        <a href="/rss.xml" class="footer-link">
+          <Icon name="rss" />
+          <span>{t.rss}</span>
+        </a>
+      )}
+      {siteConfig.githubUrl && (
+        <a href={siteConfig.githubUrl} class="footer-link" target="_blank" rel="noreferrer">
+          <Icon name="github" />
+          <span>GitHub</span>
+        </a>
+      )}
+    </div>
+  </div>
+</footer>

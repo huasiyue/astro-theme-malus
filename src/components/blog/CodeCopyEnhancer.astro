@@ -1,0 +1,122 @@
+---
+import type { Lang } from "@/config/site";
+import { getUi } from "@/i18n/ui";
+
+interface Props {
+  lang?: Lang;
+}
+
+const { lang = "zh" } = Astro.props;
+const t = getUi(lang);
+---
+
+<script
+  is:inline
+  data-astro-rerun
+  data-copy-label={t.copyCode}
+  data-copied-label={t.copiedCode}
+  data-failed-label={t.copyFailed}
+>
+  (() => {
+    const currentScript = document.currentScript;
+    const labels = {
+      copy: currentScript?.dataset.copyLabel || "Copy code",
+      copied: currentScript?.dataset.copiedLabel || "Copied",
+      failed: currentScript?.dataset.failedLabel || "Copy failed"
+    };
+
+    const COPY_ICON = `
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="9" y="9" width="11" height="11" rx="2"></rect>
+        <path d="M5 15V5a2 2 0 0 1 2-2h10"></path>
+      </svg>
+    `;
+    const CHECK_ICON = `
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="m5 12 4 4 10-10"></path>
+      </svg>
+    `;
+
+    const initCopyButtons = () => {
+      document.querySelectorAll(".reading-surface pre").forEach((pre) => {
+        if (!(pre instanceof HTMLElement) || pre.dataset.copyReady === "true") return;
+        pre.dataset.copyReady = "true";
+        pre.classList.add("has-copy-button");
+
+        const code = pre.querySelector("code");
+        if (!code) return;
+
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "code-copy-button";
+        button.innerHTML = COPY_ICON;
+        button.title = labels.copy;
+        button.setAttribute("aria-label", labels.copy);
+
+        const getCodeText = () => {
+          const lines = Array.from(code.querySelectorAll(".line"));
+          if (lines.length > 0) {
+            return lines.map((line) => line.textContent ?? "").join("\n").trimEnd();
+          }
+          return (code.textContent ?? code.innerText ?? "").trimEnd();
+        };
+
+        const showCopied = () => {
+          button.dataset.state = "copied";
+          button.innerHTML = CHECK_ICON;
+          button.title = labels.copied;
+          button.setAttribute("aria-label", labels.copied);
+        };
+
+        const resetState = () => {
+          button.dataset.state = "idle";
+          button.innerHTML = COPY_ICON;
+          button.title = labels.copy;
+          button.setAttribute("aria-label", labels.copy);
+        };
+
+        const showFailed = () => {
+          button.dataset.state = "failed";
+          button.title = labels.failed;
+          button.setAttribute("aria-label", labels.failed);
+          window.setTimeout(resetState, 1600);
+        };
+
+        const copyText = async () => {
+          const text = getCodeText();
+          if (!text) return;
+
+          try {
+            await navigator.clipboard.writeText(text);
+            showCopied();
+            window.setTimeout(resetState, 1600);
+          } catch {
+            const fallback = document.createElement("textarea");
+            fallback.value = text;
+            fallback.setAttribute("readonly", "true");
+            fallback.style.position = "fixed";
+            fallback.style.top = "0";
+            fallback.style.left = "-9999px";
+            document.body.appendChild(fallback);
+            fallback.select();
+            const ok = document.execCommand("copy");
+            document.body.removeChild(fallback);
+
+            if (ok) {
+              showCopied();
+              window.setTimeout(resetState, 1600);
+            } else {
+              showFailed();
+            }
+          }
+        };
+
+        button.addEventListener("click", copyText);
+        pre.appendChild(button);
+      });
+    };
+
+    document.addEventListener("astro:page-load", initCopyButtons);
+    initCopyButtons();
+  })();
+</script>

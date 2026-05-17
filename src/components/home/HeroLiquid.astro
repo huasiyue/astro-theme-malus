@@ -1,0 +1,33 @@
+---
+import type { HomeLiquidCard } from "@/config/defineConfig";
+
+interface Props {
+  cards?: HomeLiquidCard[];
+}
+
+const { cards = [] } = Astro.props;
+const fallbackCards: HomeLiquidCard[] = [
+  { label: "Writing", title: "Markdown / MDX" },
+  { label: "Projects", title: "Astro / TypeScript" },
+  { label: "Tools", title: "Theme / RSS / Search" }
+];
+const visibleCards = (cards.length ? cards : fallbackCards).slice(0, 3);
+const cardPositions = ["hero-liquid-card-main", "hero-liquid-card-side", "hero-liquid-card-bottom"];
+---
+
+<div class="hero-liquid glass-panel">
+  <div class="hero-liquid-stage">
+    <span class="hero-liquid-grid"></span>
+    <span class="hero-liquid-sheen hero-liquid-sheen-a"></span>
+    <span class="hero-liquid-sheen hero-liquid-sheen-b"></span>
+    <span class="hero-liquid-rib hero-liquid-rib-a"></span>
+    <span class="hero-liquid-rib hero-liquid-rib-b"></span>
+    <span class="hero-liquid-frame"></span>
+    {visibleCards.map((card, index) => (
+      <div class:list={["hero-liquid-card", cardPositions[index] ?? "hero-liquid-card-bottom"]}>
+        <span>{card.label}</span>
+        <strong>{card.title}</strong>
+      </div>
+    ))}
+  </div>
+</div>

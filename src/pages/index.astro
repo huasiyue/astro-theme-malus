@@ -1,0 +1,197 @@
+---
+import { Image } from "astro:assets";
+import HeroLiquid from "@/components/home/HeroLiquid.astro";
+import SiteRuntime from "@/components/home/SiteRuntime.astro";
+import Icon from "@/components/ui/Icon.astro";
+import { isConfigItemEnabled, siteConfig } from "@/config/site";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { formatDate } from "@/utils/dates";
+import { getAllTags, getFeaturedPosts, getPostUrl, getProjects, getPublishedPosts } from "@/utils/posts";
+
+const home = siteConfig.home;
+const posts = await getPublishedPosts("zh");
+const guidePosts = posts.filter((post) => post.data.series === home.guideSection.series);
+const featuredPosts = (await getFeaturedPosts("zh")).slice(0, 3);
+const projects = (await getProjects()).filter((project) => project.data.lang === "zh").slice(0, home.projectSection.limit);
+const tags = await getAllTags("zh");
+const latestPost = posts[0];
+const primaryPost = featuredPosts[0] ?? latestPost;
+const enabledProjects = siteConfig.features.projects && home.showProjectModules;
+const heroActions = home.hero.actions.filter(isConfigItemEnabled);
+const quickLinks = home.quickLinks.filter((link) => {
+  if (link.feature === "friends" && !home.showFriendEntry) return false;
+  if (link.feature === "sponsor" && !home.showSponsorEntry) return false;
+  return isConfigItemEnabled(link);
+});
+---
+
+<BaseLayout
+  title={siteConfig.siteName}
+  description={siteConfig.siteDescription}
+  lang="zh"
+  pageClass="home-page"
+>
+  <section class="home-hero">
+    <div class="site-shell hero-inner">
+      <div class="hero-copy home-reveal" style="--reveal-delay: 90ms;">
+        <div class="hero-identity">
+          <img
+            class="hero-avatar"
+            src={siteConfig.author.avatarUrl}
+            alt={home.hero.avatarAlt}
+            width="72"
+            height="72"
+            loading="eager"
+            decoding="async"
+          />
+          <span class="hero-kicker">
+            <Icon name="spark" />
+            {home.hero.kicker}
+          </span>
+        </div>
+        <h1 class="hero-title">{home.hero.title}</h1>
+        <p class="hero-lede">
+          {home.hero.description}
+        </p>
+        {heroActions.length > 0 && (
+          <div class="hero-actions">
+            {heroActions.map((action) => (
+              <a class={action.variant === "secondary" ? "cta-secondary" : "cta-primary"} href={action.href}>
+                {action.label}
+                {action.icon && <Icon name={action.icon} />}
+              </a>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div class="home-bento home-reveal" style="--reveal-delay: 180ms;">
+        {
+          home.showFeaturedPost ? (
+            primaryPost ? (
+              <a class="bento-card bento-feature" href={getPostUrl(primaryPost)} aria-label={`${home.featuredPost.readAriaPrefix} ${primaryPost.data.title}`}>
+                {primaryPost.data.cover && (
+                  <span class="bento-feature-cover" aria-hidden="true">
+                    <Image src={primaryPost.data.cover} alt="" loading="eager" decoding="async" />
+                  </span>
+                )}
+                <span class="bento-card-content">
+                  <span class="bento-label">
+                    <Icon name="book" />
+                    {home.featuredPost.label}
+                  </span>
+                  <strong>{primaryPost.data.title}</strong>
+                  <span class="bento-description">{primaryPost.data.description}</span>
+                  <span class="bento-meta-line">
+                    <span>{formatDate(primaryPost.data.pubDate)}</span>
+                    {primaryPost.data.category && <span>{primaryPost.data.category}</span>}
+                  </span>
+                </span>
+              </a>
+            ) : (
+              <div class="bento-card bento-feature">
+                <span class="bento-card-content">
+                  <span class="bento-label">
+                    <Icon name="book" />
+                    {home.featuredPost.label}
+                  </span>
+                  <strong>{home.featuredPost.emptyTitle}</strong>
+                  <span class="bento-description">{home.featuredPost.emptyDescription}</span>
+                </span>
+              </div>
+            )
+          ) : null
+        }
+        {home.showLiquidPanel && <HeroLiquid cards={home.liquidPanel.cards} />}
+
+        {home.showStats && (
+          <>
+            <a class="bento-card bento-stat" href="/zh/blog/">
+              <span>{home.stats.guides.label}</span>
+              <strong>{posts.length}</strong>
+              <small>{home.stats.guides.unit}</small>
+            </a>
+            <a class="bento-card bento-stat" href="/zh/tags/">
+              <span>{home.stats.tags.label}</span>
+              <strong>{tags.length}</strong>
+              <small>{home.stats.tags.unit}</small>
+            </a>
+            {siteConfig.features.runtime && (
+              <div class="bento-card bento-stat bento-stat-time">
+                <span>{home.stats.runtime.label}</span>
+                <SiteRuntime lang="zh" />
+                <small>{home.stats.runtime.unit}</small>
+              </div>
+            )}
+            <a class="bento-card bento-stat bento-stat-time" href={latestPost ? getPostUrl(latestPost) : "/zh/blog/"}>
+              <span>{home.stats.latest.label}</span>
+              <strong>{latestPost ? formatDate(latestPost.data.pubDate) : home.stats.latest.emptyValue}</strong>
+              <small>{home.stats.latest.unit}</small>
+            </a>
+          </>
+        )}
+
+        {quickLinks.map((link) => (
+          <a class="bento-card bento-link" href={link.href}>
+            <Icon name={link.icon} />
+            <strong>{link.label}</strong>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  {home.showGuideList && (
+  <section class="section-band home-river-band">
+    <div class="site-shell home-reveal" style="--reveal-delay: 260ms;">
+      <div class="home-river">
+        <div class="home-river-main">
+          <div class="section-head">
+            <span class="section-kicker">{home.guideSection.kicker}</span>
+            <h2 class="section-title">{home.guideSection.title}</h2>
+            <p class="section-copy">{home.guideSection.description}</p>
+          </div>
+
+          <div class="home-list">
+            {(guidePosts.length ? guidePosts : posts).slice(0, home.guideSection.limit).map((post) => (
+              <a class="home-list-item" href={getPostUrl(post)}>
+                <span>{formatDate(post.data.pubDate)}</span>
+                <h3>{post.data.title}</h3>
+                <p>{post.data.description}</p>
+              </a>
+            ))}
+          </div>
+        </div>
+        {enabledProjects && (
+          <aside class="home-river-side">
+            <div class="home-side-head">
+              <span class="section-kicker">{home.projectSection.kicker}</span>
+              <a class="text-link" href="/projects/">
+                {home.projectSection.allLabel}
+                <Icon name="arrow-right" />
+              </a>
+            </div>
+            <div class="home-side-stack">
+              {projects.map((project) => (
+                <a class="home-module-card" href={`/projects/#${project.id.replace(/\.(md|mdx)$/, "")}`}>
+                  <span class="home-module-card-top">
+                    <span class={`status-badge status-${project.data.status}`}>{project.data.status}</span>
+                    {project.data.featured && (
+                      <span class="meta-chip">
+                        <Icon name="spark" />
+                        {home.projectSection.featuredLabel}
+                      </span>
+                    )}
+                  </span>
+                  <strong>{project.data.title}</strong>
+                  <span class="home-module-description">{project.data.description}</span>
+                </a>
+              ))}
+            </div>
+          </aside>
+        )}
+      </div>
+    </div>
+  </section>
+  )}
+</BaseLayout>

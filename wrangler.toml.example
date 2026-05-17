@@ -1,0 +1,8 @@
+name = "malus"
+compatibility_date = "2026-05-16"
+pages_build_output_dir = "dist"
+
+[[d1_databases]]
+binding = "BLOG_VIEWS_DB"
+database_name = "malus_views"
+database_id = "replace-with-your-d1-database-id"

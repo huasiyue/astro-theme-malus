@@ -1,0 +1,27 @@
+---
+import ProjectCard from "@/components/blog/ProjectCard.astro";
+import { siteConfig } from "@/config/site";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { getProjects } from "@/utils/posts";
+
+const projects = (await getProjects()).filter((project) => project.data.lang === "zh");
+const page = siteConfig.pages.projects;
+---
+
+<BaseLayout title={page.title} description={page.description} lang="zh" noindex={!siteConfig.features.projects}>
+  <section class="page-hero">
+    <div class="site-shell page-hero-inner">
+      <span class="section-kicker">{page.kicker}</span>
+      <h1>{page.heading}</h1>
+      <p>{page.body}</p>
+    </div>
+  </section>
+
+  <section class="section-band">
+    <div class="site-shell">
+      <div class="card-grid">
+        {projects.length > 0 ? projects.map((project) => <ProjectCard project={project} />) : <p class="section-copy">{page.emptyText}</p>}
+      </div>
+    </div>
+  </section>
+</BaseLayout>

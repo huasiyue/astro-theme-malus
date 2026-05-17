@@ -1,0 +1,33 @@
+---
+import Icon from "@/components/ui/Icon.astro";
+import { isConfigItemEnabled, siteConfig } from "@/config/site";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+
+const page = siteConfig.pages.english;
+const actions = (page.actions ?? []).filter(isConfigItemEnabled);
+---
+
+<BaseLayout
+  title={page.title}
+  description={page.description}
+  lang="en"
+  showNav={false}
+>
+  <section class="page-hero">
+    <div class="site-shell page-hero-inner">
+      <span class="section-kicker">{page.kicker}</span>
+      <h1>{page.heading}</h1>
+      <p>{page.body}</p>
+      {actions.length > 0 && (
+        <div class="hero-actions">
+          {actions.map((action) => (
+            <a class={action.variant === "secondary" ? "cta-secondary" : "cta-primary"} href={action.href}>
+              {action.label}
+              {action.icon && <Icon name={action.icon} />}
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  </section>
+</BaseLayout>

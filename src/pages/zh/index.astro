@@ -1,0 +1,21 @@
+---
+import { siteConfig } from "@/config/site";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+
+const page = siteConfig.pages.zhRedirect;
+---
+
+<BaseLayout title={page.title} description={page.description} lang="zh" noindex pagefindBody={false}>
+  <section class="page-hero">
+    <div class="site-shell page-hero-inner">
+      <span class="section-kicker">{page.kicker}</span>
+      <h1>{page.heading}</h1>
+      <p>{page.body}</p>
+      <a class="text-link" href="/">{page.linkLabel}</a>
+    </div>
+  </section>
+
+  <script is:inline>
+    window.location.replace("/");
+  </script>
+</BaseLayout>

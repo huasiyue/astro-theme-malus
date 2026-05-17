@@ -1,0 +1,38 @@
+---
+import Icon from "@/components/ui/Icon.astro";
+import { isConfigItemEnabled, siteConfig } from "@/config/site";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+
+const page = siteConfig.pages.about;
+const cards = page.cards.filter(isConfigItemEnabled);
+---
+
+<BaseLayout title={page.title} description={page.description} lang="zh">
+  <section class="page-hero">
+    <div class="site-shell page-hero-inner">
+      <span class="section-kicker">{page.kicker}</span>
+      <h1>{page.heading}</h1>
+      <p>{page.body}</p>
+    </div>
+  </section>
+
+  <section class="section-band">
+    <div class="site-shell two-column-grid">
+      {cards.map((card) => (
+        card.href ? (
+          <a class="tool-card" href={card.href}>
+            <Icon name={card.icon} />
+            <h3>{card.title}</h3>
+            <p>{card.description}</p>
+          </a>
+        ) : (
+          <article class="tool-card">
+            <Icon name={card.icon} />
+            <h3>{card.title}</h3>
+            <p>{card.description}</p>
+          </article>
+        )
+      ))}
+    </div>
+  </section>
+</BaseLayout>

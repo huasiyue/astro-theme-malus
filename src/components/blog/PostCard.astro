@@ -1,0 +1,49 @@
+---
+import { Image } from "astro:assets";
+import { getUi } from "@/i18n/ui";
+import Icon from "@/components/ui/Icon.astro";
+import type { BlogEntry } from "@/utils/posts";
+import { getPostUrl } from "@/utils/posts";
+import { formatDate } from "@/utils/dates";
+import type { Lang } from "@/config/site";
+
+interface Props {
+  post: BlogEntry;
+  lang?: Lang;
+  compact?: boolean;
+}
+
+const { post, lang = post.data.lang, compact = false } = Astro.props;
+const t = getUi(lang);
+const url = getPostUrl(post);
+---
+
+<article class={`post-card ${compact ? "post-card-compact" : ""}`}>
+  <a class="post-card-link" href={url}>
+    <div class="post-card-body">
+      <div class="post-card-meta">
+        <span class="meta-chip">
+          <Icon name="calendar" />
+          {formatDate(post.data.pubDate, lang === "en" ? "en-US" : "zh-CN")}
+        </span>
+        {post.data.category && <span class="meta-chip">{post.data.category}</span>}
+      </div>
+      <h3>{post.data.title}</h3>
+      <p>{post.data.description}</p>
+      <div class="post-card-footer">
+        <span class="post-card-tags">
+          {post.data.tags.slice(0, 3).map((tag) => <span class="tag-pill">{tag}</span>)}
+        </span>
+        <span class="read-more">
+          {t.readMore}
+          <Icon name="arrow-right" />
+        </span>
+      </div>
+    </div>
+    {post.data.cover && (
+      <div class="post-card-cover">
+        <Image src={post.data.cover} alt={post.data.coverAlt ?? ""} loading="lazy" decoding="async" />
+      </div>
+    )}
+  </a>
+</article>

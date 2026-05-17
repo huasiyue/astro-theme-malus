@@ -1,0 +1,151 @@
+---
+import { siteConfig, type Lang } from "@/config/site";
+import { getUi } from "@/i18n/ui";
+
+interface Props {
+  lang?: Lang;
+}
+
+const { lang = "zh" } = Astro.props;
+const t = getUi(lang);
+const giscus = siteConfig.comments.giscus;
+const giscusLang = lang === "zh" ? "zh-CN" : "en";
+const shouldRender = giscus.enabled || giscus.showSetup;
+---
+
+{shouldRender && (
+  <section class="comments-section" aria-labelledby="comments-title">
+    <div class="comments-head">
+      <span class="section-kicker">GitHub Discussions</span>
+      <h2 id="comments-title">{t.comments}</h2>
+      <p>{t.commentsIntro}</p>
+    </div>
+
+    {giscus.enabled ? (
+      <div
+        class="giscus-shell"
+        data-giscus-root
+        data-repo={giscus.repo}
+        data-repo-id={giscus.repoId}
+        data-category={giscus.category}
+        data-category-id={giscus.categoryId}
+        data-mapping={giscus.mapping}
+        data-strict={giscus.strict}
+        data-reactions-enabled={giscus.reactionsEnabled}
+        data-emit-metadata={giscus.emitMetadata}
+        data-input-position={giscus.inputPosition}
+        data-lang={giscusLang}
+        data-light-theme={giscus.lightTheme}
+        data-dark-theme={giscus.darkTheme}
+      >
+        <p class="giscus-loading" data-giscus-status>正在加载评论...</p>
+        <div class="giscus"></div>
+      </div>
+    ) : (
+      <div class="comments-setup-panel">
+        <strong>{t.commentsSetupTitle}</strong>
+        <p>{t.commentsSetupBody}</p>
+      </div>
+    )}
+  </section>
+)}
+
+{giscus.enabled && (
+  <script is:inline data-astro-rerun>
+    (() => {
+      const getResolvedTheme = () => document.documentElement.dataset.resolvedTheme === "dark" ? "dark" : "light";
+
+      const normalizeTheme = (theme) => {
+        const value = theme || "light";
+        if (/^https?:\/\//i.test(value)) return value;
+        if (value.startsWith("/")) return new URL(value, window.location.origin).toString();
+        return value;
+      };
+
+      const getGiscusTheme = (root) => {
+        const resolved = getResolvedTheme();
+        const theme = resolved === "dark" ? root.dataset.darkTheme : root.dataset.lightTheme;
+        return normalizeTheme(theme);
+      };
+
+      const setStatus = (root, text, state = "loading") => {
+        const status = root.querySelector("[data-giscus-status]");
+        if (!(status instanceof HTMLElement)) return;
+        status.textContent = text;
+        status.dataset.state = state;
+      };
+
+      const scheduleThemeSync = () => {
+        syncTheme();
+        window.setTimeout(syncTheme, 120);
+        window.setTimeout(syncTheme, 600);
+        window.setTimeout(syncTheme, 1400);
+      };
+
+      const syncTheme = () => {
+        const frame = document.querySelector("iframe.giscus-frame");
+        const root = document.querySelector("[data-giscus-root]");
+        if (!frame || !root) return;
+
+        frame.contentWindow?.postMessage(
+          {
+            giscus: {
+              setConfig: {
+                theme: getGiscusTheme(root)
+              }
+            }
+          },
+          "https://giscus.app"
+        );
+      };
+
+      const mount = (root) => {
+        if (!(root instanceof HTMLElement) || root.dataset.giscusReady === "true") return;
+        root.dataset.giscusReady = "true";
+        setStatus(root, "正在加载评论...");
+
+        const script = document.createElement("script");
+        script.src = "https://giscus.app/client.js";
+        script.async = true;
+        script.crossOrigin = "anonymous";
+        script.setAttribute("data-repo", root.dataset.repo || "");
+        script.setAttribute("data-repo-id", root.dataset.repoId || "");
+        script.setAttribute("data-category", root.dataset.category || "");
+        script.setAttribute("data-category-id", root.dataset.categoryId || "");
+        script.setAttribute("data-mapping", root.dataset.mapping || "pathname");
+        script.setAttribute("data-strict", root.dataset.strict || "0");
+        script.setAttribute("data-reactions-enabled", root.dataset.reactionsEnabled || "1");
+        script.setAttribute("data-emit-metadata", root.dataset.emitMetadata || "0");
+        script.setAttribute("data-input-position", root.dataset.inputPosition || "bottom");
+        script.setAttribute("data-theme", getGiscusTheme(root));
+        script.setAttribute("data-lang", root.dataset.lang || "zh-CN");
+        script.setAttribute("data-loading", "lazy");
+        script.addEventListener("load", () => {
+          setStatus(root, "", "ready");
+          scheduleThemeSync();
+        });
+        script.addEventListener("error", () => {
+          setStatus(root, "评论加载失败，请检查网络或 giscus 配置。", "error");
+        });
+        root.appendChild(script);
+      };
+
+      const init = () => {
+        const roots = Array.from(document.querySelectorAll("[data-giscus-root]"));
+        roots.forEach(mount);
+      };
+
+      if (!window.__yunGiscusController) {
+        window.__yunGiscusController = { init, syncTheme };
+        document.addEventListener("astro:page-load", init);
+        window.addEventListener("yun:theme-change", scheduleThemeSync);
+        new MutationObserver(scheduleThemeSync).observe(document.documentElement, {
+          attributes: true,
+          attributeFilter: ["data-resolved-theme", "class"]
+        });
+      }
+
+      window.__yunGiscusController.init();
+    })();
+  </script>
+)}

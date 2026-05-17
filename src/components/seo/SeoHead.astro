@@ -1,0 +1,63 @@
+---
+import { siteConfig } from "@/config/site";
+import type { Lang } from "@/config/site";
+
+interface Props {
+  title?: string;
+  description?: string;
+  canonical?: string;
+  lang?: Lang;
+  image?: string;
+  noindex?: boolean;
+}
+
+const {
+  title = siteConfig.siteName,
+  description = siteConfig.siteDescription,
+  canonical,
+  lang = siteConfig.defaultLang,
+  image,
+  noindex = false
+} = Astro.props;
+
+const fullTitle = title === siteConfig.siteName ? title : `${title} · ${siteConfig.siteName}`;
+const publisher = {
+  "@type": "Organization",
+  name: siteConfig.author.name,
+  ...(siteConfig.githubUrl ? { url: siteConfig.githubUrl } : {})
+};
+const jsonLd = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: siteConfig.siteName,
+  description,
+  url: siteConfig.siteUrl,
+  inLanguage: lang === "en" ? "en-US" : "zh-CN",
+  publisher
+});
+---
+
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>{fullTitle}</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<meta name="description" content={description} />
+<meta name="theme-color" content="#fff8f8" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#0d1017" media="(prefers-color-scheme: dark)" />
+<meta name="color-scheme" content="light dark" />
+<meta name="author" content={siteConfig.author.name} />
+<meta name="generator" content={Astro.generator} />
+<meta name="robots" content={noindex ? "noindex, nofollow" : "index, follow"} />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content={siteConfig.siteName} />
+<meta property="og:title" content={fullTitle} />
+<meta property="og:description" content={description} />
+<meta property="og:locale" content={lang === "en" ? "en_US" : "zh_CN"} />
+{canonical && <meta property="og:url" content={canonical} />}
+{image && <meta property="og:image" content={image} />}
+<meta name="twitter:card" content={image ? "summary_large_image" : "summary"} />
+<meta name="twitter:title" content={fullTitle} />
+<meta name="twitter:description" content={description} />
+{image && <meta name="twitter:image" content={image} />}
+{canonical && <link rel="canonical" href={canonical} />}
+<script is:inline type="application/ld+json" set:html={jsonLd}></script>

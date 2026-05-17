@@ -1,0 +1,39 @@
+---
+import { siteConfig } from "@/config/site";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { formatDate, groupByYear } from "@/utils/dates";
+import { getPostUrl, getPublishedPosts } from "@/utils/posts";
+
+const groups = groupByYear(await getPublishedPosts("zh"));
+const page = siteConfig.pages.archive;
+---
+
+<BaseLayout title={page.title} description={page.description} lang="zh">
+  <section class="page-hero">
+    <div class="site-shell page-hero-inner">
+      <span class="section-kicker">{page.kicker}</span>
+      <h1>{page.heading}</h1>
+      <p>{page.body}</p>
+    </div>
+  </section>
+
+  <section class="section-band">
+    <div class="site-shell">
+      <div class="list-stack">
+        {groups.length > 0 ? groups.map((group) => (
+          <section class="archive-year">
+            <h2>{group.year}</h2>
+            <div class="archive-list">
+              {group.items.map((post) => (
+                <div class="archive-item">
+                  <span class="archive-date">{formatDate(post.data.pubDate)}</span>
+                  <a href={getPostUrl(post)}>{post.data.title}</a>
+                </div>
+              ))}
+            </div>
+          </section>
+        )) : <p class="section-copy">{page.emptyText}</p>}
+      </div>
+    </div>
+  </section>
+</BaseLayout>

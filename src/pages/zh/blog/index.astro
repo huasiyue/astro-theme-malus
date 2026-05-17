@@ -1,0 +1,38 @@
+---
+import PostCard from "@/components/blog/PostCard.astro";
+import Icon from "@/components/ui/Icon.astro";
+import { siteConfig } from "@/config/site";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { getAllTags, getPublishedPosts } from "@/utils/posts";
+
+const posts = await getPublishedPosts("zh");
+const tags = await getAllTags("zh");
+const page = siteConfig.pages.blogIndex;
+---
+
+<BaseLayout title={page.title} description={page.description} lang="zh">
+  <section class="page-hero">
+    <div class="site-shell page-hero-inner">
+      <span class="section-kicker">{page.kicker}</span>
+      <h1>{page.heading}</h1>
+      <p>{page.body}</p>
+      <div class="tag-cloud">
+        {tags.slice(0, page.tagLimit).map(({ tag, count }) => (
+          <a class="tag-pill" href={`/zh/tags/${encodeURIComponent(tag)}/`}>
+            <Icon name="tag" />
+            {tag}
+            <span>{count}</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section-band">
+    <div class="site-shell">
+      <div class="card-grid">
+        {posts.length > 0 ? posts.map((post) => <PostCard post={post} />) : <p class="section-copy">{page.emptyText}</p>}
+      </div>
+    </div>
+  </section>
+</BaseLayout>

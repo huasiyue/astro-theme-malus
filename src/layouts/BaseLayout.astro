@@ -1,0 +1,157 @@
+---
+import SiteFooter from "@/components/layout/SiteFooter.astro";
+import SiteHeader from "@/components/layout/SiteHeader.astro";
+import SeoHead from "@/components/seo/SeoHead.astro";
+import { siteConfig } from "@/config/site";
+import type { Lang } from "@/config/site";
+import { ClientRouter } from "astro:transitions";
+import "@/styles/global.css";
+
+interface Props {
+  title?: string;
+  description?: string;
+  canonical?: string;
+  image?: string;
+  lang?: Lang;
+  noindex?: boolean;
+  showNav?: boolean;
+  pageClass?: string;
+  pagefindBody?: boolean;
+}
+
+const {
+  title,
+  description,
+  canonical,
+  image,
+  lang = siteConfig.defaultLang,
+  noindex = false,
+  showNav = true,
+  pageClass = "",
+  pagefindBody = true
+} = Astro.props;
+
+const currentUrl = canonical ?? new URL(Astro.url.pathname, siteConfig.siteUrl).toString();
+---
+
+<!doctype html>
+<html lang={lang} data-theme="system">
+  <head>
+    <SeoHead title={title} description={description} canonical={currentUrl} lang={lang} image={image} noindex={noindex} />
+    <ClientRouter fallback="animate" />
+    <script is:inline>
+      (() => {
+        const storageKey = "yun-theme";
+        const root = document.documentElement;
+        const media = window.matchMedia("(prefers-color-scheme: dark)");
+        const effectQueries = [
+          window.matchMedia("(prefers-reduced-motion: reduce)"),
+          window.matchMedia("(prefers-reduced-transparency: reduce)"),
+          window.matchMedia("(hover: none)"),
+          window.matchMedia("(pointer: coarse)"),
+          window.matchMedia("(update: slow)")
+        ];
+        const stored = localStorage.getItem(storageKey) || "system";
+        const resolved = stored === "system" ? (media.matches ? "dark" : "light") : stored;
+        root.dataset.theme = stored;
+        root.dataset.resolvedTheme = resolved;
+        root.dataset.effects = effectQueries.some((query) => query.matches) ? "calm" : "rich";
+        root.classList.toggle("dark", resolved === "dark");
+        root.style.colorScheme = resolved;
+      })();
+    </script>
+  </head>
+  <body class:list={[pageClass]}>
+    <a class="skip-link" href="#main-content">跳到正文</a>
+    <SiteHeader lang={lang} showNav={showNav} />
+    <main id="main-content" data-pagefind-body={pagefindBody ? true : undefined}>
+      <slot />
+    </main>
+    <SiteFooter lang={lang} />
+    <script is:inline>
+      (() => {
+        if (window.__yunThemeController) {
+          window.__yunThemeController.init();
+          return;
+        }
+
+        const storageKey = "yun-theme";
+        const root = document.documentElement;
+        const media = window.matchMedia("(prefers-color-scheme: dark)");
+
+        const setTheme = (choice) => {
+          const resolved = choice === "system" ? (media.matches ? "dark" : "light") : choice;
+          const buttons = Array.from(document.querySelectorAll("[data-theme-option]"));
+
+          root.dataset.theme = choice;
+          root.dataset.resolvedTheme = resolved;
+          root.classList.toggle("dark", resolved === "dark");
+          root.style.colorScheme = resolved;
+          localStorage.setItem(storageKey, choice);
+          window.dispatchEvent(new CustomEvent("yun:theme-change", { detail: { choice, resolved } }));
+
+          buttons.forEach((button) => {
+            const active = button.getAttribute("data-theme-option") === choice;
+            button.toggleAttribute("aria-pressed", active);
+            button.classList.toggle("is-active", active);
+          });
+        };
+
+        const init = () => {
+          const stored = localStorage.getItem(storageKey) || "system";
+          const buttons = Array.from(document.querySelectorAll("[data-theme-option]"));
+
+          setTheme(stored);
+
+          buttons.forEach((button) => {
+            if (button.dataset.themeBound === "true") return;
+            button.dataset.themeBound = "true";
+            button.addEventListener("click", () => {
+              const choice = button.getAttribute("data-theme-option") || "system";
+              setTheme(choice);
+            });
+          });
+        };
+
+        media.addEventListener("change", () => {
+          if ((localStorage.getItem(storageKey) || "system") === "system") {
+            setTheme("system");
+          }
+        });
+
+        window.__yunThemeController = { init, setTheme };
+        document.addEventListener("astro:page-load", init);
+        init();
+      })();
+    </script>
+    <script is:inline>
+      (() => {
+        if (window.__yunEffectsController) {
+          window.__yunEffectsController.init();
+          return;
+        }
+
+        const root = document.documentElement;
+        const queries = [
+          window.matchMedia("(prefers-reduced-motion: reduce)"),
+          window.matchMedia("(prefers-reduced-transparency: reduce)"),
+          window.matchMedia("(hover: none)"),
+          window.matchMedia("(pointer: coarse)"),
+          window.matchMedia("(update: slow)")
+        ];
+
+        const init = () => {
+          root.dataset.effects = queries.some((query) => query.matches) ? "calm" : "rich";
+        };
+
+        queries.forEach((query) => {
+          query.addEventListener("change", init);
+        });
+
+        window.__yunEffectsController = { init };
+        document.addEventListener("astro:page-load", init);
+        init();
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,112 @@
+---
+import Icon from "@/components/ui/Icon.astro";
+import { friendApplyTemplate, friendLinks, friendsConfig, ownerFriendCard } from "@/config/friends";
+import { isConfigItemEnabled, siteConfig } from "@/config/site";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+
+const actions = friendsConfig.actions.filter((action) => {
+  if (action.href === "#friend-apply" && !friendsConfig.showApply) return false;
+  return isConfigItemEnabled(action);
+});
+---
+
+<BaseLayout title={friendsConfig.title} description={friendsConfig.description} lang="zh" noindex={!siteConfig.features.friends}>
+  <section class="page-hero">
+    <div class="site-shell page-hero-inner">
+      <span class="section-kicker">{friendsConfig.kicker}</span>
+      <h1>{friendsConfig.title}</h1>
+      <p>{friendsConfig.description}</p>
+      {actions.length > 0 && (
+        <div class="hero-actions">
+          {actions.map((action) => (
+            <a class={action.variant === "secondary" ? "cta-secondary" : "cta-primary"} href={action.href}>
+              {action.label}
+              {action.icon && <Icon name={action.icon} />}
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  </section>
+
+  <section class="section-band">
+    <div class="site-shell">
+      <div class="section-head">
+        <span class="section-kicker">{friendsConfig.ownerSection.kicker}</span>
+        <h2 class="section-title">{friendsConfig.ownerSection.title}</h2>
+        <p class="section-copy">{friendsConfig.ownerSection.description}</p>
+      </div>
+
+      <article class="friend-card friend-card-owner">
+        <div class="friend-avatar">
+          {ownerFriendCard.avatar ? (
+            <img src={ownerFriendCard.avatar} alt={`${ownerFriendCard.name} avatar`} loading="lazy" decoding="async" />
+          ) : (
+            <span>{ownerFriendCard.name.slice(0, 1)}</span>
+          )}
+        </div>
+        <div class="friend-card-body">
+          <div class="friend-card-title">
+            <h3>{ownerFriendCard.name}</h3>
+            <a href={ownerFriendCard.url} target="_blank" rel="noreferrer" aria-label={`打开 ${ownerFriendCard.name}`}>
+              <Icon name="external" />
+            </a>
+          </div>
+          <p>{ownerFriendCard.description}</p>
+          <div class="post-tags">
+            {ownerFriendCard.tags?.map((tag) => <span class="tag-pill">{tag}</span>)}
+          </div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="section-band" id="friend-list">
+    <div class="site-shell">
+      <div class="section-head">
+        <span class="section-kicker">{friendsConfig.listSection.kicker}</span>
+        <h2 class="section-title">{friendsConfig.listSection.title}</h2>
+        <p class="section-copy">{friendsConfig.listSection.description}</p>
+      </div>
+
+      <div class="friend-grid">
+        {friendLinks.map((friend) => (
+          <a class="friend-card" href={friend.url} target="_blank" rel="noreferrer">
+            <div class="friend-avatar">
+              {friend.avatar ? (
+                <img src={friend.avatar} alt={`${friend.name} avatar`} loading="lazy" decoding="async" />
+              ) : (
+                <span>{friend.name.slice(0, 1)}</span>
+              )}
+            </div>
+            <div class="friend-card-body">
+              <div class="friend-card-title">
+                <h3>{friend.name}</h3>
+                <Icon name="external" />
+              </div>
+              <p>{friend.description}</p>
+              <div class="post-tags">
+                {friend.tags?.map((tag) => <span class="tag-pill">{tag}</span>)}
+              </div>
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  {friendsConfig.showApply && (
+  <section class="section-band" id="friend-apply">
+    <div class="site-shell">
+      <div class="template-info-panel">
+        <div class="section-head">
+          <span class="section-kicker">{friendsConfig.applySection.kicker}</span>
+          <h2 class="section-title">{friendsConfig.applySection.title}</h2>
+          <p class="section-copy">{friendsConfig.applySection.description}</p>
+        </div>
+        <pre class="template-code"><code>{friendApplyTemplate}</code></pre>
+      </div>
+    </div>
+  </section>
+  )}
+</BaseLayout>

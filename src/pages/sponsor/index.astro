@@ -1,0 +1,85 @@
+---
+import Icon from "@/components/ui/Icon.astro";
+import { sponsorConfig } from "@/config/sponsor";
+import { isConfigItemEnabled, siteConfig } from "@/config/site";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+
+const actions = sponsorConfig.actions.filter(isConfigItemEnabled);
+---
+
+<BaseLayout title={sponsorConfig.title} description={sponsorConfig.description} lang="zh" noindex={!siteConfig.features.sponsor}>
+  <section class="page-hero">
+    <div class="site-shell page-hero-inner">
+      <span class="section-kicker">{sponsorConfig.kicker}</span>
+      <h1>{sponsorConfig.title}</h1>
+      <p>{sponsorConfig.description}</p>
+      {actions.length > 0 && (
+        <div class="hero-actions">
+          {actions.map((action) => (
+            <a class={action.variant === "secondary" ? "cta-secondary" : "cta-primary"} href={action.href}>
+              {action.label}
+              {action.icon && <Icon name={action.icon} />}
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  </section>
+
+  <section class="section-band" id="sponsor-methods">
+    <div class="site-shell">
+      <div class="section-head">
+        <span class="section-kicker">{sponsorConfig.methodsSection.kicker}</span>
+        <h2 class="section-title">{sponsorConfig.methodsSection.title}</h2>
+        <p class="section-copy">{sponsorConfig.methodsSection.description}</p>
+      </div>
+
+      <div class="sponsor-grid">
+        {sponsorConfig.methods.map((method) => (
+          <article class="sponsor-card">
+            <div class="sponsor-card-top">
+              <span class="sponsor-icon">
+                <Icon name={method.image ? "heart" : "external"} />
+              </span>
+              {method.note && <span class="meta-chip">{method.note}</span>}
+            </div>
+            <h3>{method.name}</h3>
+            <p>{method.description}</p>
+            {method.image && (
+              <img class="sponsor-qr" src={method.image} alt={`${method.name} ${sponsorConfig.qrAltSuffix}`} loading="lazy" decoding="async" />
+            )}
+            {method.url && (
+              <a class="text-link" href={method.url} target="_blank" rel="noreferrer">
+                {sponsorConfig.linkLabel}
+                <Icon name="external" />
+              </a>
+            )}
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section-band" id="sponsor-thanks">
+    <div class="site-shell">
+      <div class="section-head">
+        <span class="section-kicker">{sponsorConfig.thanksSection.kicker}</span>
+        <h2 class="section-title">{sponsorConfig.thanksSection.title}</h2>
+        <p class="section-copy">{sponsorConfig.thanksSection.description}</p>
+      </div>
+
+      <div class="thanks-list">
+        {sponsorConfig.thanks.map((item) => (
+          <article class="thanks-item">
+            <Icon name="spark" />
+            <div>
+              <h3>{item.name}</h3>
+              <p>{item.message}</p>
+              {item.date && <span>{item.date}</span>}
+            </div>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+</BaseLayout>

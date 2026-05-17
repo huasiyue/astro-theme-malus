@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 720" role="img" aria-label="Sponsor placeholder">
+  <rect width="720" height="720" rx="48" fill="#fff8f8"/>
+  <path d="M104 146h512v428H104z" fill="#fffdfb" stroke="#eadcdf" stroke-width="8"/>
+  <path d="M166 208h108v108H166zM446 208h108v108H446zM166 488h108v66H166zM446 488h108v66H446z" fill="#619f75" opacity=".82"/>
+  <path d="M318 208h84v66h-84zM318 318h84v84h-84zM318 446h84v108h-84zM166 360h108v84H166zM446 360h108v84H446z" fill="#cf718f" opacity=".62"/>
+  <circle cx="360" cy="360" r="82" fill="#fff3f5" stroke="#619f75" stroke-width="8"/>
+  <path d="M360 407s-62-35-62-76c0-22 17-39 38-39 12 0 20 5 24 13 4-8 13-13 24-13 21 0 38 17 38 39 0 41-62 76-62 76Z" fill="#cf718f"/>
+  <text x="360" y="628" text-anchor="middle" fill="#405246" font-family="Inter, system-ui, sans-serif" font-size="34" font-weight="800">Replace with your sponsor QR</text>
+</svg>

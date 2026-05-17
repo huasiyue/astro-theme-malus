@@ -1,0 +1,100 @@
+---
+import Icon from "@/components/ui/Icon.astro";
+import type { Lang } from "@/config/site";
+import { siteConfig } from "@/config/site";
+import { getUi } from "@/i18n/ui";
+
+interface Props {
+  slug: string;
+  lang?: Lang;
+}
+
+const { slug, lang = "zh" } = Astro.props;
+const t = getUi(lang);
+const endpoint = siteConfig.viewCounter.endpoint;
+const localFallback = siteConfig.viewCounter.localFallback ? "true" : "false";
+---
+
+<span
+  class="meta-chip post-view-chip"
+  data-post-views
+  data-slug={slug}
+  data-lang={lang}
+  data-endpoint={endpoint}
+  data-local-fallback={localFallback}
+  data-count-template={t.viewsCount}
+  data-loading-label={t.viewsLoading}
+  data-unavailable-label={t.viewsUnavailable}
+>
+  <Icon name="eye" />
+  <span data-post-views-value>{t.viewsLoading}</span>
+</span>
+
+<script is:inline data-astro-rerun>
+  (() => {
+    const chips = Array.from(document.querySelectorAll("[data-post-views]"));
+    if (!chips.length) return;
+
+    const formatCount = (chip, count) => {
+      const lang = chip.dataset.lang === "en" ? "en-US" : "zh-CN";
+      const template = chip.dataset.countTemplate || "{count} views";
+      const number = new Intl.NumberFormat(lang).format(count);
+      return template.replace("{count}", number);
+    };
+
+    const render = (chip, text) => {
+      const value = chip.querySelector("[data-post-views-value]");
+      if (value) value.textContent = text;
+    };
+
+    const incrementLocal = (chip) => {
+      if (chip.dataset.localFallback !== "true") {
+        render(chip, chip.dataset.unavailableLabel || "-");
+        return;
+      }
+
+      const slug = chip.dataset.slug || location.pathname;
+      const key = `malus:post-views:${slug}`;
+      const next = Math.max(0, Number(localStorage.getItem(key)) || 0) + 1;
+      localStorage.setItem(key, String(next));
+      render(chip, formatCount(chip, next));
+      chip.title = chip.dataset.unavailableLabel || "";
+    };
+
+    const incrementRemote = async (chip) => {
+      const slug = chip.dataset.slug;
+      const endpoint = chip.dataset.endpoint;
+
+      if (!slug || !endpoint) {
+        incrementLocal(chip);
+        return;
+      }
+
+      try {
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ slug }),
+          credentials: "same-origin"
+        });
+
+        if (!response.ok) throw new Error("View counter request failed");
+
+        const data = await response.json();
+        const views = Number(data.views ?? data.count);
+        if (!Number.isFinite(views)) throw new Error("View counter response is invalid");
+
+        render(chip, formatCount(chip, views));
+        chip.removeAttribute("title");
+      } catch {
+        incrementLocal(chip);
+      }
+    };
+
+    chips.forEach((chip) => {
+      if (!(chip instanceof HTMLElement) || chip.dataset.viewsReady === "true") return;
+      chip.dataset.viewsReady = "true";
+      incrementRemote(chip);
+    });
+  })();
+</script>

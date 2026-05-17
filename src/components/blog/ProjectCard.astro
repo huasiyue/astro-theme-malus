@@ -1,0 +1,43 @@
+---
+import Icon from "@/components/ui/Icon.astro";
+import { siteConfig } from "@/config/site";
+import type { ProjectEntry } from "@/utils/posts";
+
+interface Props {
+  project: ProjectEntry;
+}
+
+const { project } = Astro.props;
+const id = project.id.replace(/\.(md|mdx)$/, "");
+---
+
+<article class="project-card" id={id}>
+  <div class="project-card-top">
+    <span class={`status-badge status-${project.data.status}`}>{project.data.status}</span>
+    {project.data.featured && (
+      <span class="meta-chip">
+        <Icon name="spark" />
+        {siteConfig.home.projectSection.featuredLabel}
+      </span>
+    )}
+  </div>
+  <h3>{project.data.title}</h3>
+  <p>{project.data.description}</p>
+  <div class="project-stack">
+    {project.data.stack.map((item) => <span class="tag-pill">{item}</span>)}
+  </div>
+  <div class="project-links">
+    {project.data.repoUrl && (
+      <a class="text-link" href={project.data.repoUrl} target="_blank" rel="noreferrer">
+        Repo
+        <Icon name="arrow-right" />
+      </a>
+    )}
+    {project.data.demoUrl && (
+      <a class="text-link" href={project.data.demoUrl} target="_blank" rel="noreferrer">
+        Demo
+        <Icon name="arrow-right" />
+      </a>
+    )}
+  </div>
+</article>
