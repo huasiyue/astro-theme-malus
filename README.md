@@ -8,7 +8,7 @@
   垂丝海棠主题 · Astro 静态博客模板
 </p>
 
-<p align="center">
+<p align="center">（AI生成-探索）
   <strong>博客文章</strong> · <strong>项目展示</strong> · <strong>友链</strong> · <strong>赞助</strong> · <strong>搜索</strong> · <strong>RSS</strong> · <strong>主题切换</strong>
 </p>
 
